@@ -1,0 +1,232 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+  PARENT
+}
+
+enum Class {
+  P1
+  P2
+  P3
+  P4
+  P5
+  P6
+  S1
+  S2
+  S3
+  S4
+  S5
+  S6
+}
+
+enum Status {
+  PUBLISHED
+  DRAFT
+}
+
+enum MarkingStatus {
+  MARKED
+  PENDING
+}
+
+enum QuestionType {
+  MCQ
+  TRUE_FALSE
+  OPEN_ENDED
+}
+
+enum QuizType {
+  OPEN
+  CLOSED
+}
+
+enum MCQ {
+  A
+  B
+  C
+  D
+  E
+  F
+}
+model Subject {
+  id      String   @id @default(uuid())
+  name    String
+  class   Class
+  topics  Topic[]
+}
+
+model Topic {
+  id         String   @id @default(uuid())
+  name       String
+  subjectId  String
+  subject    Subject @relation(fields: [subjectId], references: [id])
+}
+
+model School {
+  id            String         @id @default(uuid())
+  name          String
+  email         String         @unique
+  phone         String?
+  address       String?
+  teachers      User[]         @relation("TeacherSchool")
+  students      User[]         @relation("StudentSchool")
+  subscriptions Subscription[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(STUDENT)
+  class     Class
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // School relationships
+  schoolId String?
+  school   School? @relation(name: "TeacherSchool", fields: [schoolId], references: [id])
+
+  studentSchoolId String?
+  studentSchool   School? @relation(name: "StudentSchool", fields: [studentSchoolId], references: [id])
+
+  quizzes       Quiz[]
+  submissions   Submission[]
+  materials     CourseMaterial[]
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id        String   @id @default(uuid())
+  type      String // SCHOOL or STUDENT
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean  @default(true)
+
+  // Either school or student
+  schoolId String?
+  school   School? @relation(fields: [schoolId], references: [id])
+
+  studentId String?
+  student   User?   @relation(fields: [studentId], references: [id])
+
+  @@index([schoolId])
+  @@index([studentId])
+}
+
+model Quiz {
+  quizId           String   @id @default(uuid())
+  quizName         String   @unique
+  quizType         QuizType
+  class            Class
+  description      String
+  quizInstructions String
+  status           Status   @default(DRAFT)
+  startTime        DateTime
+  endTime          DateTime
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @default(now())
+
+  teacherId String
+  teacher   User   @relation(fields: [teacherId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  questions   Question[]
+  submissions Submission[]
+
+  @@index([teacherId])
+}
+
+model Question {
+  questionId             String       @id @default(uuid())
+  questionBody           String
+  questionType           QuestionType @default(OPEN_ENDED)
+  optionA                String?
+  optionB                String?
+  optionC                String?
+  optionD                String?
+  optionE                String?
+  optionF                String?
+  open_ended_answer      String?
+  multiple_choice_answer MCQ?
+  true_false_answer      Boolean?
+  maximumPoints          Int
+
+  quizQuizId String?
+  quiz       Quiz?   @relation(fields: [quizQuizId], references: [quizId], onDelete: Cascade, onUpdate: Cascade)
+
+  answers Answer[]
+
+  @@index([quizQuizId])
+}
+
+model Answer {
+  answerId         String        @id @default(uuid())
+  answerType       QuestionType
+  open_answer      String?
+  chosen_option    MCQ?
+  boolean_answer   Boolean?
+  accumulatedMarks Int           @default(0)
+  markingStatus    MarkingStatus @default(PENDING)
+
+  questionId String
+  question   Question @relation(fields: [questionId], references: [questionId], onDelete: Cascade, onUpdate: Cascade)
+
+  submissionSubmissionId String?
+  submission             Submission? @relation(fields: [submissionSubmissionId], references: [submissionId], onDelete: Cascade, onUpdate: Cascade)
+
+  fileName      String?
+  submittedFile File?   @relation(fields: [fileName], references: [name])
+
+  @@index([questionId])
+  @@index([submissionSubmissionId])
+  @@index([fileName])
+}
+
+model Submission {
+  submissionId     String        @id @default(uuid())
+  submissionStatus MarkingStatus @default(PENDING)
+  accumulatedMarks Int
+  createdAt        DateTime      @default(now())
+
+  quizQuizId String
+  quiz       Quiz   @relation(fields: [quizQuizId], references: [quizId], onDelete: Cascade, onUpdate: Cascade)
+
+  submittedByUserId String
+  submittedBy       User   @relation(fields: [submittedByUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  answers Answer[]
+
+  @@index([quizQuizId])
+  @@index([submittedByUserId])
+}
+
+model File {
+  name      String   @id
+  size      BigInt
+  type      String
+  extension String
+  Answer    Answer[]
+}
+
+model CourseMaterial {
+  id           String   @id @default(uuid())
+  title        String
+  description  String?
+  subject      String
+  fileUrl      String
+  uploadedById String
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+  createdAt    DateTime @default(now())
+}
