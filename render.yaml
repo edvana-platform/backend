@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: edvana-backend
+    env: node
+    plan: free
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: node dist/main
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql://postgres:hyguette1230@localhost:5432/edvana_db?schema=public
+      - key: JWT_SECRET
+        value: supersecret
