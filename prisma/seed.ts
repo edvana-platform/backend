@@ -15,7 +15,6 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Seeding database...');
 
-  // 1. Create School
   const school = await prisma.school.upsert({
     where: { email: 'greenvalley@school.rw' },
     update: {},
@@ -37,7 +36,7 @@ async function main() {
       email: 'teacher@greenvalley.rw',
       password: teacherPassword,
       role: Role.TEACHER,
-      class: Class.S2,
+      class: [Class.S2],
       schoolId: school.id,
     },
   });
@@ -52,7 +51,7 @@ async function main() {
       email: 'student@greenvalley.rw',
       password: studentPassword,
       role: Role.STUDENT,
-      class: Class.S2,
+      class: [Class.S2],
       studentSchoolId: school.id,
     },
   });

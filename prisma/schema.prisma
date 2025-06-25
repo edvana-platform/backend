@@ -91,7 +91,7 @@ model User {
   email     String   @unique
   password  String
   role      Role     @default(STUDENT)
-  class     Class
+  class     Class[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
