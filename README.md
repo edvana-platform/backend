@@ -27,6 +27,8 @@ npm install
 npm run start
 \`\`\`
 
+# Visit Swagger documentation on render
+https://edvana-platform.onrender.com/api
 
 ## 🧱 Tech Stack
 
