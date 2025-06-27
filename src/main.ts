@@ -20,8 +20,16 @@ async function bootstrap() {
     .setTitle('Edvana API')
     .setDescription('The API docs for Edvana platform')
     .setVersion('1.0')
-    .addBearerAuth()
-    .build();
+    .addBearerAuth(
+    {
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT',
+      in: 'header',
+    },
+    'access-token', // this name is used later in the @ApiBearerAuth() decorator
+  )
+  .build();
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
