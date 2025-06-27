@@ -1,7 +1,7 @@
 /* eslint-disable */
 import { Controller, Get, Post, Body, Param, Delete, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
+import { CreateUserDto } from './dto/user.dto';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { Role } from '@prisma/client';

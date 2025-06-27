@@ -18,7 +18,7 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('Edvana API')
-    .setDescription('The API docs for Edvana learning platform')
+    .setDescription('The API docs for Edvana platform')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
@@ -29,4 +29,3 @@ async function bootstrap() {
   await app.listen(process.env.PORT || 3000);
 }
 bootstrap();
-
