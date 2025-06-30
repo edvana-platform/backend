@@ -39,7 +39,7 @@ export class UsersController {
 
   @Delete(':id')
   @Roles(Role.ADMIN)
-  @ApiOperation({ summary: 'Delete a user (Admin only)' })
+  @ApiOperation({ summary: 'Delete a user' })
   @ApiResponse({ status: 200, description: 'User deleted' })
   @ApiResponse({ status: 403, description: 'Forbidden (requires ADMIN role)' })
   remove(@Param('id') id: string) {
