@@ -24,6 +24,9 @@ export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
   firstName: string;
+  @ApiProperty({
+    example: 'User',
+  })
     @IsString()
   @IsNotEmpty()
   lastName: string;
@@ -42,6 +45,9 @@ export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
   password: string;
+  @ApiProperty({
+    example: '0787313076',
+  })
   @IsString()
   @IsNotEmpty()
   phone: string;
