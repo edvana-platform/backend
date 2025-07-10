@@ -86,27 +86,39 @@ model School {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      Role     @default(STUDENT)
-  class     Class[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(uuid())
+  firstName  String
+  lastName   String
+  email      String   @unique
+  phone      String?  @unique
+  password   String
+  role       Role     @default(STUDENT)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  // School relationships
-  schoolId String?
-  school   School? @relation(name: "TeacherSchool", fields: [schoolId], references: [id])
+  studentClass Class?  
+  teacherClasses Class[] 
+
+  parentId String?               // Foreign key
+  parent   User? @relation("ParentChild", fields: [parentId], references: [id])
+  children User[] @relation("ParentChild") // Inverse side
+
+  // Teacher-specific
+  subjectSpecialties String[]
+
+  // School Relationships
+  schoolId         String?
+  school           School? @relation(name: "TeacherSchool", fields: [schoolId], references: [id])
 
   studentSchoolId String?
   studentSchool   School? @relation(name: "StudentSchool", fields: [studentSchoolId], references: [id])
 
-  quizzes       Quiz[]
-  submissions   Submission[]
-  materials     CourseMaterial[]
-  subscriptions Subscription[]
+  quizzes          Quiz[]
+  submissions      Submission[]
+  materials        CourseMaterial[]
+  subscriptions    Subscription[]
 }
+
 
 model Subscription {
   id        String   @id @default(uuid())

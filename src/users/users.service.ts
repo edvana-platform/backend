@@ -4,26 +4,52 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/user.dto';
 import * as bcrypt from 'bcrypt';
 import { BadRequestException } from '@nestjs/common';
+import { Class, Role } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
   async create(data: CreateUserDto) {
-    if (
-    (data.role === 'ADMIN' || data.role === 'PARENT') && 
-    data.class?.length
-  ) {
-    throw new BadRequestException('ADMIN/PARENT cannot have classes');
-  }
+    if ((data.role === 'ADMIN' || data.role === 'PARENT') && data.class?.length) {
+      throw new BadRequestException('ADMIN/PARENT cannot have classes');
+    }
 
-  if (data.role === 'STUDENT' && data.class?.length !== 1) {
-    throw new BadRequestException('Student must have exactly one class');
-  }
+    if (data.role === 'STUDENT' && data.class?.length !== 1) {
+      throw new BadRequestException('Student must have exactly one class');
+    }
+
     const hashedPassword = await bcrypt.hash(data.password, 10);
-    return this.prisma.user.create({
-      data: { ...data, password: hashedPassword },
-    });
+
+    const userData = {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      password: hashedPassword,
+      phone: data.phone,
+      role: data.role,
+    };
+
+    // Handle class assignments based on role
+    if (data.role === 'STUDENT' && data.class?.length) {
+      return this.prisma.user.create({
+        data: {
+          ...userData,
+          studentClass: data.class[0], // Direct enum assignment
+        },
+      });
+    } else if (data.role === 'TEACHER' && data.class?.length) {
+      return this.prisma.user.create({
+        data: {
+          ...userData,
+          teacherClasses: { set: data.class },
+        },
+      });
+    } else {
+      return this.prisma.user.create({
+        data: userData,
+      });
+    }
   }
 
   findAll() {
@@ -31,7 +57,7 @@ export class UsersService {
   }
 
   findOne(id: string) {
-    return this.prisma.user.findUnique({ where: { id: id } });
+    return this.prisma.user.findUnique({ where: { id } });
   }
 
   findByEmail(email: string) {
@@ -39,6 +65,15 @@ export class UsersService {
   }
 
   async remove(id: string) {
-    return this.prisma.user.delete({ where: { id: id } });
+    return this.prisma.user.delete({ where: { id } });
   }
+  findByPhone(phone: string){
+    return this.prisma.user.findUnique({where:{phone}})
+  }
+  async updatePassword(userId: string, newHashedPassword: string) {
+  return this.prisma.user.update({
+    where: { id: userId },
+    data: { password: newHashedPassword },
+  });
+}
 }

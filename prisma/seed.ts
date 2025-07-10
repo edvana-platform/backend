@@ -15,6 +15,7 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Seeding database...');
 
+  // 1. School
   const school = await prisma.school.upsert({
     where: { email: 'greenvalley@school.rw' },
     update: {},
@@ -26,38 +27,48 @@ async function main() {
     },
   });
 
-  // 2. Create Teacher
+  // 2. Teacher
   const teacherPassword = await bcrypt.hash('teach123', 10);
   const teacher = await prisma.user.upsert({
     where: { email: 'teacher@greenvalley.rw' },
     update: {},
     create: {
-      name: 'Mr. Jean Dusenge',
+      firstName: 'Jean',
+      lastName: 'Dusenge',
       email: 'teacher@greenvalley.rw',
       password: teacherPassword,
       role: Role.TEACHER,
-      class: [Class.S2],
+      teacherClasses: [Class.S2, Class.S3],
+      subjectSpecialties: ['Mathematics', 'Physics'],
       schoolId: school.id,
     },
   });
 
-  // 3. Create Student
+  // 3. Student
   const studentPassword = await bcrypt.hash('student123', 10);
-  const student = await prisma.user.upsert({
-    where: { email: 'student@greenvalley.rw' },
-    update: {},
-    create: {
-      name: 'Alice Uwase',
-      email: 'student@greenvalley.rw',
-      password: studentPassword,
-      role: Role.STUDENT,
-      class: [Class.S2],
-      studentSchoolId: school.id,
-    },
-  });
-
-  // 4. CBC-Aligned REB Subjects
-  const subjects = await prisma.subject.createMany({
+const student = await prisma.user.upsert({
+  where: { email: 'student@greenvalley.rw' },
+  update: {},
+  create: {
+    firstName: 'Alice',
+    lastName: 'Uwase',
+    email: 'student@greenvalley.rw',
+    password: studentPassword,
+    role: Role.STUDENT,
+    studentClass: Class.S2,
+    studentSchoolId: school.id,
+    // parent: {
+    //   create: {
+    //     firstName: 'Marie',
+    //     lastName: 'Mukamana',
+    //     email: 'parent@greenvalley.rw',
+    //     password: await bcrypt.hash('parent123', 10),
+    //     role: Role.PARENT,
+    //   },
+    // },
+  },
+});
+await prisma.subject.createMany({
     data: [
       { name: 'Mathematics', class: Class.S2 },
       { name: 'Biology', class: Class.S2 },
@@ -78,7 +89,7 @@ async function main() {
     skipDuplicates: true,
   });
 
-  // 6. Sample Quiz by teacher
+  // 6. Quiz
   const quiz = await prisma.quiz.create({
     data: {
       quizName: 'S2 Math Term 1 Mock',
@@ -89,11 +100,11 @@ async function main() {
       teacherId: teacher.id,
       status: Status.PUBLISHED,
       startTime: new Date(),
-      endTime: new Date(Date.now() + 1000 * 60 * 60), // +1hr
+      endTime: new Date(Date.now() + 1000 * 60 * 60),
     },
   });
 
-  // 7. Questions for the Quiz
+  // 7. Questions
   await prisma.question.createMany({
     data: [
       {
