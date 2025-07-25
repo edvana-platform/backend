@@ -7,9 +7,9 @@ export class RedisService {
   private client: Redis;
 
   constructor() {
-    this.client = new Redis(process.env.REDIS_URL, {
-      tls: process.env.REDIS_URL?.startsWith('rediss://') ? {} : undefined,
-    });
+    this.client = new Redis(process.env.REDIS_URL!, {
+  tls: process.env.REDIS_URL?.startsWith('rediss://') ? {} : undefined,
+});
   }
 
   async set(key: string, value: string, ttl: number) {
