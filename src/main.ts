@@ -14,6 +14,10 @@ async function bootstrap() {
       transform: true, 
     }),
   );
+  app.enableCors({
+    origin: '*', 
+    
+  });
 
 
   const config = new DocumentBuilder()
@@ -27,7 +31,7 @@ async function bootstrap() {
       bearerFormat: 'JWT',
       in: 'header',
     },
-    'access-token', // this name is used later in the @ApiBearerAuth() decorator
+    'access-token',
   )
   .build();
 

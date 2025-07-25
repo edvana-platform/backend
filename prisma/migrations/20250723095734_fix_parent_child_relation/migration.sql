@@ -17,6 +17,9 @@ CREATE TYPE "QuestionType" AS ENUM ('MCQ', 'TRUE_FALSE', 'OPEN_ENDED');
 CREATE TYPE "QuizType" AS ENUM ('OPEN', 'CLOSED');
 
 -- CreateEnum
+CREATE TYPE "Gender" AS ENUM ('MALE', 'FEMALE');
+
+-- CreateEnum
 CREATE TYPE "MCQ" AS ENUM ('A', 'B', 'C', 'D', 'E', 'F');
 
 -- CreateTable
@@ -53,14 +56,25 @@ CREATE TABLE "School" (
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
+    "firstName" TEXT NOT NULL,
+    "lastName" TEXT NOT NULL,
+    "gender" "Gender" NOT NULL,
+    "dob" TIMESTAMP(3) NOT NULL,
+    "studentId" TEXT,
+    "teacherId" TEXT,
+    "address" TEXT NOT NULL,
     "email" TEXT NOT NULL,
+    "phone" TEXT,
     "password" TEXT NOT NULL,
     "role" "Role" NOT NULL DEFAULT 'STUDENT',
-    "class" "Class" NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "schoolId" TEXT,
+    "studentClass" "Class",
+    "studentStream" TEXT,
+    "teacherClasses" "Class"[],
+    "parentPhone" TEXT,
+    "subjectSpecialties" TEXT[],
+    "schoolName" TEXT,
     "studentSchoolId" TEXT,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
@@ -169,10 +183,16 @@ CREATE TABLE "CourseMaterial" (
 );
 
 -- CreateIndex
+CREATE UNIQUE INDEX "School_name_key" ON "School"("name");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "School_email_key" ON "School"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_phone_key" ON "User"("phone");
 
 -- CreateIndex
 CREATE INDEX "Subscription_schoolId_idx" ON "Subscription"("schoolId");
@@ -208,7 +228,10 @@ CREATE INDEX "Submission_submittedByUserId_idx" ON "Submission"("submittedByUser
 ALTER TABLE "Topic" ADD CONSTRAINT "Topic_subjectId_fkey" FOREIGN KEY ("subjectId") REFERENCES "Subject"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "User" ADD CONSTRAINT "User_schoolId_fkey" FOREIGN KEY ("schoolId") REFERENCES "School"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "User" ADD CONSTRAINT "User_parentPhone_fkey" FOREIGN KEY ("parentPhone") REFERENCES "User"("phone") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "User" ADD CONSTRAINT "User_schoolName_fkey" FOREIGN KEY ("schoolName") REFERENCES "School"("name") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "User" ADD CONSTRAINT "User_studentSchoolId_fkey" FOREIGN KEY ("studentSchoolId") REFERENCES "School"("id") ON DELETE SET NULL ON UPDATE CASCADE;

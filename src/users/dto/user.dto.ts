@@ -12,60 +12,75 @@ import {
   validateOrReject,
   IsJWT,
   MinLength,
+  IsDateString
 } from 'class-validator';
-import { Role, Class } from '@prisma/client';
+import { Role, Class, Gender } from '@prisma/client';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateUserDto {
-  
-  @ApiProperty({
-    example: 'Example',
-  })
+  @ApiProperty({ example: 'John' })
   @IsString()
   @IsNotEmpty()
   firstName: string;
-  @ApiProperty({
-    example: 'User',
-  })
-    @IsString()
+
+  @ApiProperty({ example: 'Doe' })
+  @IsString()
   @IsNotEmpty()
   lastName: string;
 
-  @ApiProperty({
-    example: 'user@example.com',
-  })
-  @IsString({ message: 'Email must be a string' })
-  @IsEmail({}, { message: 'Please provide a valid email address' })
+  @ApiProperty({ example: 'MALE' })
+  @IsEnum(Gender)
+  gender: Gender;
+
+  @ApiProperty({ example: '2005-09-15' })
+  @IsDateString()
+  dob: Date;
+
+  @ApiProperty({ example: 'john@example.com' })
+  @IsEmail()
   email: string;
 
-  @ApiProperty({
-    example: 'Password123!',
-  })
-
+  @ApiProperty({ example: '0780000000' })
   @IsString()
-  @IsNotEmpty()
-  password: string;
-  @ApiProperty({
-    example: '0787313076',
-  })
-  @IsString()
-  @IsNotEmpty()
   phone: string;
 
-  @ApiProperty({
-    example: 'TEACHER',
-  })
+  @ApiProperty({ example: 'Password123!' })
+  @IsString()
+  password: string;
+
+  @ApiProperty({ example: 'STUDENT' })
   @IsEnum(Role)
   role: Role;
 
-  @ApiProperty({
-    example: ['S1', 'S2'],
-  })
+  @ApiProperty({ example: 'Kigali' })
+  @IsOptional()
+  address: string;
+
+  @ApiProperty({ example: 'ST12345' })
+  @IsOptional()
+  studentId?: string;
+
+  @ApiProperty({ example: ['S1'], required: false })
   @IsOptional()
   @IsArray()
-  @IsEnum(Class, { each: true })
   class?: Class[];
+
+  @ApiProperty({ example: 'A', required: false })
+  @IsOptional()
+  @IsString()
+  studentStream?: string;
+
+  @ApiProperty({ example: 'Green Valley School', required: false })
+  @IsOptional()
+  @IsString()
+  schoolName?: string;
+
+  @ApiProperty({ example: '0788888888', required: false })
+  @IsOptional()
+  @IsString()
+  parentPhone?: string;
 }
+
 
 export class LoginUserDto {
   @ApiProperty({
@@ -108,16 +123,22 @@ export class ForgotPasswordDto {
   phone: string;
 }
 export class ResetPasswordDto {
-   @ApiProperty({
-  })
-  @IsJWT()
-  token: string;
-
-   @ApiProperty({
-    example: 'Example@123',
+  @ApiProperty({
+    example: 'mail@mail.co',
   })
   @IsString()
-  @IsNotEmpty()
-  @MinLength(6, { message: 'Password must be at least 6 characters long' })
+  @IsEmail()
+  email: string;
+
+  @ApiProperty({
+    example: '11111',
+  })
+  @IsString()
+  otp: string;
+
+  @ApiProperty({
+    example: 'Password123!',
+  })
+  @IsString()
   newPassword: string;
 }

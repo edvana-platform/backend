@@ -1,11 +1,14 @@
 /* eslint-disable */
-import { Controller, Get, Post, Body, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, UseGuards, UploadedFile, UseInterceptors, Patch } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/user.dto';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { Role } from '@prisma/client';
-import { ApiTags, ApiBearerAuth,ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth,ApiOperation, ApiResponse, ApiBody, ApiConsumes } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { AssignSchoolDto } from 'src/school/dto/assign-school.dto';
 
 @ApiTags('Users')
 @ApiBearerAuth('access-token')
@@ -45,4 +48,33 @@ export class UsersController {
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
   }
+
+  @Post('upload')
+@UseInterceptors(FileInterceptor('file', {
+  storage: diskStorage({
+    destination: './uploads',
+    filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
+  }),
+}))
+@ApiOperation({ summary: 'Upload Excel file for bulk user import' })
+@ApiConsumes('multipart/form-data')
+@ApiBody({
+  schema: {
+    type: 'object',
+    properties: {
+      file: {
+        type: 'string',
+        format: 'binary',
+      },
+    },
+  },
+})
+@ApiResponse({ status: 201, description: 'Users imported successfully' })
+async uploadUsers(@UploadedFile() file: Express.Multer.File) {
+  return this.usersService.importFromExcel(file.path);
+}
+  @Patch('assign-school')
+async assignToSchool(@Body() dto: AssignSchoolDto) {
+  return this.usersService.assignSchool(dto);
+}
 }

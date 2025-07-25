@@ -50,6 +50,11 @@ enum QuizType {
   CLOSED
 }
 
+enum Gender {
+  MALE
+  FEMALE
+}
+
 enum MCQ {
   A
   B
@@ -58,23 +63,24 @@ enum MCQ {
   E
   F
 }
+
 model Subject {
-  id      String   @id @default(uuid())
-  name    String
-  class   Class
-  topics  Topic[]
+  id     String  @id @default(uuid())
+  name   String
+  class  Class
+  topics Topic[]
 }
 
 model Topic {
-  id         String   @id @default(uuid())
-  name       String
-  subjectId  String
-  subject    Subject @relation(fields: [subjectId], references: [id])
+  id        String  @id @default(uuid())
+  name      String
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id])
 }
 
 model School {
   id            String         @id @default(uuid())
-  name          String
+  name          String         @unique
   email         String         @unique
   phone         String?
   address       String?
@@ -89,6 +95,11 @@ model User {
   id         String   @id @default(uuid())
   firstName  String
   lastName   String
+  gender     Gender
+  dob        DateTime
+  studentId  String?
+  teacherId  String?
+  address    String
   email      String   @unique
   phone      String?  @unique
   password   String
@@ -96,28 +107,26 @@ model User {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  studentClass Class?  
-  teacherClasses Class[] 
+  studentClass    Class?
+  studentStream   String?
+  teacherClasses  Class[]
 
-  parentId String?               // Foreign key
-  parent   User? @relation("ParentChild", fields: [parentId], references: [id])
-  children User[] @relation("ParentChild") // Inverse side
+  parentPhone String?
 
-  // Teacher-specific
   subjectSpecialties String[]
 
-  // School Relationships
-  schoolId         String?
-  school           School? @relation(name: "TeacherSchool", fields: [schoolId], references: [id])
+  schoolName   String?
+  school       School? @relation(name: "TeacherSchool", fields: [schoolName], references: [name])
 
   studentSchoolId String?
   studentSchool   School? @relation(name: "StudentSchool", fields: [studentSchoolId], references: [id])
 
-  quizzes          Quiz[]
-  submissions      Submission[]
-  materials        CourseMaterial[]
-  subscriptions    Subscription[]
+  quizzes       Quiz[]
+  submissions   Submission[]
+  materials     CourseMaterial[]
+  subscriptions Subscription[]
 }
+
 
 
 model Subscription {

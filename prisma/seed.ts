@@ -7,6 +7,7 @@ import {
   Status,
   QuestionType,
   MCQ,
+  Gender,
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
@@ -15,7 +16,7 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Seeding database...');
 
-  // 1. School
+  // 1. Create School
   const school = await prisma.school.upsert({
     where: { email: 'greenvalley@school.rw' },
     update: {},
@@ -27,7 +28,7 @@ async function main() {
     },
   });
 
-  // 2. Teacher
+  // 2. Create Teacher
   const teacherPassword = await bcrypt.hash('teach123', 10);
   const teacher = await prisma.user.upsert({
     where: { email: 'teacher@greenvalley.rw' },
@@ -35,40 +36,43 @@ async function main() {
     create: {
       firstName: 'Jean',
       lastName: 'Dusenge',
+      gender: Gender.MALE,
+      dob: new Date('1985-08-12'),
       email: 'teacher@greenvalley.rw',
+      phone: '0788123456',
+      address: 'kigali',
       password: teacherPassword,
       role: Role.TEACHER,
       teacherClasses: [Class.S2, Class.S3],
       subjectSpecialties: ['Mathematics', 'Physics'],
-      schoolId: school.id,
+      schoolName: school.name,
     },
   });
 
-  // 3. Student
+  // 3. Create Student
   const studentPassword = await bcrypt.hash('student123', 10);
-const student = await prisma.user.upsert({
-  where: { email: 'student@greenvalley.rw' },
-  update: {},
-  create: {
-    firstName: 'Alice',
-    lastName: 'Uwase',
-    email: 'student@greenvalley.rw',
-    password: studentPassword,
-    role: Role.STUDENT,
-    studentClass: Class.S2,
-    studentSchoolId: school.id,
-    // parent: {
-    //   create: {
-    //     firstName: 'Marie',
-    //     lastName: 'Mukamana',
-    //     email: 'parent@greenvalley.rw',
-    //     password: await bcrypt.hash('parent123', 10),
-    //     role: Role.PARENT,
-    //   },
-    // },
-  },
-});
-await prisma.subject.createMany({
+  const student = await prisma.user.upsert({
+    where: { email: 'student@greenvalley.rw' },
+    update: {},
+    create: {
+      firstName: 'Alice',
+      lastName: 'Uwase',
+      gender: Gender.FEMALE,
+      dob: new Date('2008-05-23'),
+      email: 'student@greenvalley.rw',
+      phone: '0788234567',
+      address: 'kigali',
+      password: studentPassword,
+      role: Role.STUDENT,
+      studentClass: Class.S2,
+      studentStream: 'A',
+      schoolName: school.name,
+      studentSchoolId: school.id,
+    },
+  });
+
+  // 4. Create Subjects
+  await prisma.subject.createMany({
     data: [
       { name: 'Mathematics', class: Class.S2 },
       { name: 'Biology', class: Class.S2 },
@@ -79,7 +83,7 @@ await prisma.subject.createMany({
 
   const math = await prisma.subject.findFirst({ where: { name: 'Mathematics' } });
 
-  // 5. Topics under Mathematics
+  // 5. Create Topics
   await prisma.topic.createMany({
     data: [
       { name: 'Algebra', subjectId: math!.id },
@@ -89,7 +93,7 @@ await prisma.subject.createMany({
     skipDuplicates: true,
   });
 
-  // 6. Quiz
+  // 6. Create Quiz
   const quiz = await prisma.quiz.create({
     data: {
       quizName: 'S2 Math Term 1 Mock',
@@ -100,11 +104,11 @@ await prisma.subject.createMany({
       teacherId: teacher.id,
       status: Status.PUBLISHED,
       startTime: new Date(),
-      endTime: new Date(Date.now() + 1000 * 60 * 60),
+      endTime: new Date(Date.now() + 1000 * 60 * 60), // +1hr
     },
   });
 
-  // 7. Questions
+  // 7. Create Questions
   await prisma.question.createMany({
     data: [
       {
