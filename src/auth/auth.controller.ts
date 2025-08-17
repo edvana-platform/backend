@@ -1,7 +1,7 @@
 /* eslint-disable */
-import { Controller, Post, Body, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Body, BadRequestException, Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LoginUserDto } from 'src/users/dto/user.dto';
+import { LoginUserDto, LogoutDto } from 'src/users/dto/user.dto';
 import { ForgotPasswordDto } from 'src/users/dto/user.dto';
 import { ResetPasswordDto } from 'src/users/dto/user.dto';
 
@@ -28,4 +28,12 @@ export class AuthController {
 async resetPassword(@Body() dto: ResetPasswordDto) {
   return this.authService.resetPassword(dto);
 }
+  @Post('logout')
+  async logout(@Body() dto: LogoutDto) {
+    const { token } = dto;
+    if (!token) {
+      throw new BadRequestException('Token is required');
+    }
+    return this.authService.logout(dto.token); 
+  }
 }

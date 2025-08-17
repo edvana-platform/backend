@@ -40,6 +40,8 @@ async create(data: CreateUserDto) {
   if (data.role === 'TEACHER' && (!data.class || data.class.length === 0)) {
     throw new BadRequestException('TEACHER must have at least one class');
   }
+  const school = await this.prisma.school.findUnique({ where: { name: data.schoolName } });
+
 
   const hashedPassword = await bcrypt.hash(data.password, 10);
 
@@ -60,7 +62,11 @@ async create(data: CreateUserDto) {
     parentPhone: data.parentPhone,
   };
 
-
+  if (data.role === 'STUDENT' && school) {
+    userData.schoolId = school.id; // store id for students
+  } else if (data.role === 'TEACHER' && school) {
+    userData.schoolName = school.name; // store name for teachers
+  }
   // Add class info
   if (data.role === 'STUDENT' && data.class?.length === 1) {
     userData.studentClass = data.class[0];
@@ -166,7 +172,7 @@ async importFromExcel(filePath: string) {
           studentStream: role === 'STUDENT' ? stream : undefined,
           teacherClasses: role === 'TEACHER' && userClass ? [userClass as Class] : [],
           parentPhone: role === 'STUDENT' ? parent_phone : undefined,
-          studentSchoolId: role === 'STUDENT' ? school?.id : undefined,
+          schoolId: role === 'STUDENT' ? school?.id : undefined,
           schoolName: role === 'TEACHER' ? school?.name : undefined,
         },
       });

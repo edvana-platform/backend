@@ -12,7 +12,8 @@ import {
   validateOrReject,
   IsJWT,
   MinLength,
-  IsDateString
+  IsDateString,
+  isString
 } from 'class-validator';
 import { Role, Class, Gender } from '@prisma/client';
 import { ApiProperty } from '@nestjs/swagger';
@@ -141,4 +142,11 @@ export class ResetPasswordDto {
   })
   @IsString()
   newPassword: string;
+}
+export class LogoutDto {
+  @ApiProperty({
+    example: "token"
+  })
+  @IsString()
+  token: string;
 }

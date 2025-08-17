@@ -67,7 +67,7 @@ async function main() {
       studentClass: Class.S2,
       studentStream: 'A',
       schoolName: school.name,
-      studentSchoolId: school.id,
+      schoolId: school.id,
     },
   });
 

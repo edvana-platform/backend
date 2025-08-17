@@ -112,4 +112,49 @@ async resetPassword(dto: ResetPasswordDto) {
 
   return { message: 'Password reset successful' };
 }
+
+async logout(token: string) {
+  if (!token) {
+    throw new BadRequestException('Token is required');
+  }
+
+  try {
+    const payload = this.jwtService.decode(token);
+    if (!payload || !payload.sub) {
+      throw new UnauthorizedException('Invalid token');
+    }
+
+    // Verify token first to ensure it's valid
+    this.jwtService.verify(token);
+
+    const expirationTime = payload.exp;
+    const currentTime = Math.floor(Date.now() / 1000);
+    
+    if (expirationTime < currentTime) {
+      return { message: 'Token already expired' };
+    }
+
+    const ttl = expirationTime - currentTime;
+    await this.redisService.set(`blacklist:${token}`, 'true', ttl);
+
+    return { message: 'Successfully logged out' };
+  } catch (error) {
+    if (error.name === 'JsonWebTokenError') {
+      throw new UnauthorizedException('Invalid token');
+    }
+    if (error.name === 'TokenExpiredError') {
+      return { message: 'Token already expired' };
+    }
+    throw new UnauthorizedException('Error logging out');
+  }
+}
+
+  // Validate token method (without blacklist check)
+  async validateToken(token: string) {
+    try {
+      return this.jwtService.verify(token);  // If the token is expired, it will throw an error
+    } catch (error) {
+      throw new UnauthorizedException('Invalid token');
+    }
+  }
 }
