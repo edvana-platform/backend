@@ -8,6 +8,7 @@ import { SchoolsModule } from './school/schools.module';
 import { RedisModule } from './common/redis/redis.module';
 import { EmailModule } from './common/email/email.module';
 import { SubjectsModule } from './subjects/subjects.module';
+import { SchedulesModule } from './schedules/schedules.module';
 
 @Module({
   imports: [
@@ -19,7 +20,8 @@ import { SubjectsModule } from './subjects/subjects.module';
     SchoolsModule,
     RedisModule,
     EmailModule,
-    SubjectsModule
+    SubjectsModule,
+    SchedulesModule
   ],
 })
 export class AppModule implements NestModule {

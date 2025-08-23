@@ -19,6 +19,8 @@ model Subject {
 
   topics Topic[]
   courseMaterials CourseMaterial[]
+  schedules       ScheduleEvent[]
+
 }
 
 model Topic {
@@ -71,6 +73,8 @@ model User {
   school             School?          @relation("TeacherSchool", fields: [schoolName], references: [name])
   studentSchool      School?          @relation("StudentSchool", fields: [schoolId], references: [id])
   subjects           Subject[]        @relation("UserSubjects")
+  schedules       ScheduleEvent[]
+
 }
 
 model Subscription {
@@ -247,4 +251,47 @@ enum MCQ {
   D
   E
   F
+}
+
+enum ScheduleAudience {
+  PUBLIC        // visible to anyone (school‑wide)
+  STUDENTS      // visible to all students
+  TEACHERS      // visible to all teachers
+  CLASS_ONLY    // visible only to the specified class (targetClass)
+  PRIVATE       // visible only to the creator
+}
+
+model ScheduleEvent {
+  id           String            @id @default(uuid())
+  title        String            // e.g., "Mathematics"
+  description  String?
+  location     String?           // e.g., "A101"
+  audience     ScheduleAudience  @default(PUBLIC)
+
+  // time window
+  startsAt     DateTime
+  endsAt       DateTime
+
+  // who created it
+  createdById  String
+  createdBy    User              @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  // optional links to help your UI
+  subjectId    String?
+  subject      Subject?          @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+
+  // optional: limit visibility to a specific class (uses your existing Class enum)
+  targetClass  Class?
+
+  // optional display helpers (match the screenshot text)
+  teacherName  String?
+  subjectName  String?
+
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([startsAt])
+  @@index([createdById])
+  @@index([subjectId])
+  @@index([targetClass])
 }
