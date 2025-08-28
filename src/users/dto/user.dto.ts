@@ -5,17 +5,17 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  Matches,
   ValidateIf,
   IsArray,
-  ArrayNotEmpty,
-  validateOrReject,
-  IsJWT,
-  MinLength,
+  IsUUID,
+  IsInt,
+  Min,
+  Max,
   IsDateString,
-  isString
+  MinLength,
+  IsBoolean
 } from 'class-validator';
-import { Role, Class, Gender } from '@prisma/client';
+import { Role, Gender } from '@prisma/client';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateUserDto {
@@ -35,53 +35,152 @@ export class CreateUserDto {
 
   @ApiProperty({ example: '2005-09-15' })
   @IsDateString()
-  dob: Date;
+  dob: string;
 
   @ApiProperty({ example: 'john@example.com' })
   @IsEmail()
   email: string;
 
-  @ApiProperty({ example: '0780000000' })
+  @ApiProperty({ example: '0780000000', required: false })
+  @IsOptional()
   @IsString()
-  phone: string;
+  phone?: string;
 
   @ApiProperty({ example: 'Password123!' })
   @IsString()
+  @MinLength(6)
   password: string;
 
   @ApiProperty({ example: 'STUDENT' })
   @IsEnum(Role)
   role: Role;
 
-  @ApiProperty({ example: 'Kigali' })
-  @IsOptional()
-  address: string;
-
-  @ApiProperty({ example: 'ST12345' })
-  @IsOptional()
-  studentId?: string;
-
-  @ApiProperty({ example: ['S1'], required: false })
-  @IsOptional()
-  @IsArray()
-  class?: Class[];
-
-  @ApiProperty({ example: 'A', required: false })
+  @ApiProperty({ example: 'Kigali', required: false })
   @IsOptional()
   @IsString()
-  studentStream?: string;
+  address?: string;
 
-  @ApiProperty({ example: 'Green Valley School', required: false })
+  @ApiProperty({ example: 'school-uuid-here', required: false })
   @IsOptional()
   @IsString()
-  schoolName?: string;
+  schoolId?: string;
 
-  @ApiProperty({ example: '0788888888', required: false })
-  @IsOptional()
-  @IsString()
-  parentPhone?: string;
 }
 
+export class UpdateUserDto {
+  @ApiProperty({ example: 'John', required: false })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  firstName?: string;
+
+  @ApiProperty({ example: 'Doe', required: false })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  lastName?: string;
+
+  @ApiProperty({ example: 'MALE', required: false })
+  @IsOptional()
+  @IsEnum(Gender)
+  gender?: Gender;
+
+  @ApiProperty({ example: 'john.updated@example.com', required: false })
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @ApiProperty({ example: '0780000001', required: false })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @ApiProperty({ example: 'Kigali, Updated Address', required: false })
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @ApiProperty({ example: 'ACTIVE', required: false })
+  @IsOptional()
+  @IsEnum(['ACTIVE', 'INACTIVE'])
+  status?: 'ACTIVE' | 'INACTIVE';
+}
+
+export class AssignParentToStudentDto {
+  @ApiProperty({ example: 'parent-user-uuid' })
+  @IsUUID()
+  parentId: string;
+
+  @ApiProperty({ example: 'student-user-uuid' })
+  @IsUUID()
+  studentId: string;
+
+  @ApiProperty({ example: 'father', required: false })
+  @IsOptional()
+  @IsString()
+  relationship?: string;
+
+  @ApiProperty({ example: true, required: false })
+  @IsOptional()
+  @IsBoolean()
+  isEmergencyContact?: boolean;
+}
+
+export class CreateTeacherProfileDto {
+  @ApiProperty({ example: 'teacher-user-uuid' })
+  @IsUUID()
+  userId: string;
+
+  @ApiProperty({ example: ['Mathematics', 'Physics'] })
+  @IsArray()
+  @IsString({ each: true })
+  specialization: string[];
+
+  @ApiProperty({ example: 'Master in Mathematics Education' })
+  @IsString()
+  qualification: string;
+
+  @ApiProperty({ example: 5 })
+  @IsInt()
+  @Min(0)
+  @Max(50)
+  experience: number;
+
+  @ApiProperty({ example: ['Mathematics', 'Physics'] })
+  @IsArray()
+  @IsString({ each: true })
+  subjects: string[];
+
+  @ApiProperty({ example: ['Head of Department'], required: false })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  customRoles?: string[];
+}
+
+export class CreateStudentProfileDto {
+  @ApiProperty({ example: 'student-user-uuid' })
+  @IsUUID()
+  userId: string;
+
+  @ApiProperty({ example: 'class-uuid' })
+  @IsUUID()
+  classId: string;
+
+  @ApiProperty({ example: '2024-01-15' })
+  @IsDateString()
+  enrollmentDate: string;
+}
+
+export class CreateParentProfileDto {
+  @ApiProperty({ example: 'parent-user-uuid' })
+  @IsUUID()
+  userId: string;
+
+  @ApiProperty({ example: '1234567890123456' })
+  @IsString()
+  nationalId: string;
+}
 
 export class LoginUserDto {
   @ApiProperty({
@@ -92,14 +191,15 @@ export class LoginUserDto {
   @ValidateIf(o => !o.phone)
   @IsString({ message: 'Email must be a string' })
   @IsEmail({}, { message: 'Please provide a valid email address' })
-  email: string;
+  email?: string;
 
   @ApiProperty({
     example: '+1234567890',
+    required: false
   })
   @ValidateIf(o => !o.email)
   @IsString({ message: 'Phone must be a string' })
-  phone: string;
+  phone?: string;
 
   @ApiProperty({
     example: 'Password123!',
@@ -108,21 +208,25 @@ export class LoginUserDto {
   @IsNotEmpty()
   password: string;
 }
+
 export class ForgotPasswordDto {
-   @ApiProperty({
+  @ApiProperty({
     example: 'example@mail.com',
+    required: false
   })
   @IsOptional()
   @IsEmail()
   email?: string;
 
-   @ApiProperty({
+  @ApiProperty({
     example: '+1234567890',
+    required: false
   })
   @IsOptional()
   @IsString()
-  phone: string;
+  phone?: string;
 }
+
 export class ResetPasswordDto {
   @ApiProperty({
     example: 'mail@mail.co',
@@ -141,8 +245,10 @@ export class ResetPasswordDto {
     example: 'Password123!',
   })
   @IsString()
+  @MinLength(6)
   newPassword: string;
 }
+
 export class LogoutDto {
   @ApiProperty({
     example: "token"

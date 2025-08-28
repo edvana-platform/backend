@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { SubjectCardDto, SubjectDetailDto, CreateSubjectDto, UpdateSubjectDto, ClassEnum } from './dto/subject.dto';
+import { SubjectCardDto, SubjectDetailDto, CreateSubjectDto, UpdateSubjectDto} from './dto/subject.dto';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -18,18 +18,9 @@ export class SubjectsService {
     const klass = opts?.class;
 
     // validate and normalize class filter
-    let classFilter: string | undefined;
-    if (klass) {
-      if (!Object.values(ClassEnum).includes(klass as ClassEnum)) {
-        throw new BadRequestException(
-          `Invalid class: ${klass}. Valid values: ${Object.values(ClassEnum).join(', ')}`
-        );
-      }
-      classFilter = klass; // keep as string for Prisma filter
-    }
+    
 
     const subjects = await this.prisma.subject.findMany({
-      where: classFilter ? { class: classFilter } : undefined,
       include: {
         teacher: { select: { firstName: true, lastName: true } },
       },
@@ -48,7 +39,8 @@ export class SubjectsService {
       results.push({
         id: s.id,
         name: s.name,
-        class: s.class as ClassEnum, // cast DB string -> DTO enum
+        code: s.code,
+        gradeId: s.gradeId, 
         description: s.description,
         durationWeeks: s.durationWeeks,
         teacherName: s.teacher ? `${s.teacher.firstName} ${s.teacher.lastName}` : null,
@@ -85,7 +77,8 @@ export class SubjectsService {
     return {
       id: s.id,
       name: s.name,
-      class: s.class as ClassEnum,
+      code: s.code,
+      gradeId: s.gradeId ,
       description: s.description,
       durationWeeks: s.durationWeeks,
       teacherName: s.teacher ? `${s.teacher.firstName} ${s.teacher.lastName}` : null,
@@ -107,23 +100,24 @@ export class SubjectsService {
     };
   }
 
-  async createSubject(dto: CreateSubjectDto) {
-    if (dto.userId) {
-      const count = await this.prisma.user.count({ where: { id: dto.userId } });
-      if (!count) throw new BadRequestException('userId does not exist');
-    }
-
-    return this.prisma.subject.create({
-      data: {
-        name: dto.name,
-        class: dto.class,
-        description: dto.description ?? null,
-        durationWeeks: dto.durationWeeks ?? null,
-        ...(dto.userId ? { teacher: { connect: { id: dto.userId } } } : {}),
-      },
-      include: { teacher: { select: { firstName: true, lastName: true } } },
-    });
+async createSubject(dto: CreateSubjectDto) {
+  if (dto.userId) {
+    const count = await this.prisma.user.count({ where: { id: dto.userId } });
+    if (!count) throw new BadRequestException('userId does not exist');
   }
+
+  return this.prisma.subject.create({
+    data: {
+      name: dto.name,
+      code: dto.code,
+      gradeId: dto.gradeId,
+      description: dto.description ?? null,
+      durationWeeks: dto.durationWeeks ?? null,
+      userId: dto.userId ?? null, 
+    },
+    include: { teacher: { select: { firstName: true, lastName: true } } },
+  });
+}
 
   async updateSubject(id: string, dto: UpdateSubjectDto) {
     const existingSubject = await this.prisma.subject.findUnique({ where: { id } });

@@ -7,74 +7,143 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id        String     @id @default(uuid())
+  firstName String
+  lastName  String
+  email     String     @unique
+  phone     String?    @unique
+  dob       DateTime
+  gender    Gender
+  address   String?
+  role      Role
+  status    UserStatus @default(ACTIVE)
+  password  String
+  schoolId  String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  // Relations
+  teacherProfile Teacher?
+  studentProfile Student?
+  parentProfile  Parent?
+  school         School?  @relation(fields: [schoolId], references: [id])
+
+  subscriptions   Subscription[]
+  subjects        Subject[]        @relation("UserSubjects")
+  quizzes         Quiz[]
+  submissions     Submission[]
+  courseMaterials CourseMaterial[]
+  scheduleEvents  ScheduleEvent[]
+}
+
+model Teacher {
+  userId         String     @id
+  user           User       @relation(fields: [userId], references: [id])
+  specialization String[]
+  qualification  String
+  experience     Int
+  subjects       String[]
+  classes        Class[]
+  customRoles    String[]
+  status         UserStatus @default(ACTIVE)
+}
+
+model Student {
+  userId         String     @id
+  user           User       @relation(fields: [userId], references: [id])
+  classId        String
+  class          Class      @relation(fields: [classId], references: [id])
+  enrollmentDate DateTime
+  status         UserStatus @default(ACTIVE)
+
+  // Relations
+  parents ParentStudent[]
+}
+
+model Parent {
+  userId     String     @id
+  user       User       @relation(fields: [userId], references: [id])
+  nationalId String     @unique
+  status     UserStatus @default(ACTIVE)
+
+  // Relations
+  children ParentStudent[]
+}
+
+model ParentStudent {
+  id        String @id @default(uuid())
+  parentId  String
+  studentId String
+
+  // Optional: Add relationship metadata
+  relationship       String? // e.g., "father", "mother", "guardian"
+  isEmergencyContact Boolean  @default(false)
+  createdAt          DateTime @default(now())
+
+  parent  Parent  @relation(fields: [parentId], references: [userId], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [userId], onDelete: Cascade)
+
+  @@unique([parentId, studentId])
+  @@index([parentId])
+  @@index([studentId])
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+  PARENT
+  SCHOOL_ADMIN
+  SUPER_ADMIN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
 model Subject {
   id            String  @id @default(uuid())
   name          String
-  class         String
+  code          String?
+  gradeId       String
   description   String?
   durationWeeks Int?
+  userId        String?
+  teacher       User?   @relation("UserSubjects", fields: [userId], references: [id], onDelete: SetNull)
 
-  userId   String?
-  teacher  User?    @relation("UserSubjects", fields: [userId], references: [id], onDelete: SetNull)
-
-  topics Topic[]
+  topics          Topic[]
   courseMaterials CourseMaterial[]
   schedules       ScheduleEvent[]
-
+  Grade           Grade            @relation(fields: [gradeId], references: [id])
 }
 
 model Topic {
-  id        String  @id @default(uuid())
-  name      String
-  subjectId String
-  subject   Subject @relation(fields: [subjectId], references: [id])
+  id              String           @id @default(uuid())
+  name            String
+  subjectId       String
+  subject         Subject          @relation(fields: [subjectId], references: [id])
   courseMaterials CourseMaterial[]
 }
 
 model School {
-  id            String         @id @default(uuid())
-  name          String         @unique
-  email         String         @unique
-  phone         String?
-  address       String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id        String   @id @default(uuid())
+  name      String   @unique
+  email     String   @unique
+  phone     String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
   subscriptions Subscription[]
-  teachers      User[]         @relation("TeacherSchool")
-  students      User[]         @relation("StudentSchool")
-}
-
-model User {
-  id                 String           @id @default(uuid())
-  firstName          String
-  lastName           String
-  gender             Gender
-  dob                DateTime
-  studentId          String?
-  teacherId          String?
-  address            String
-  email              String           @unique
-  phone              String?          @unique
-  password           String
-  role               Role             @default(STUDENT)
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
-  studentClass       Class?
-  studentStream      String?
-  teacherClasses     Class[]
-  parentPhone        String?
-  subjectSpecialties String[]
-  schoolName         String?
-  schoolId           String?
-  materials          CourseMaterial[]
-  quizzes            Quiz[]
-  submissions        Submission[]
-  subscriptions      Subscription[]
-  school             School?          @relation("TeacherSchool", fields: [schoolName], references: [name])
-  studentSchool      School?          @relation("StudentSchool", fields: [schoolId], references: [id])
-  subjects           Subject[]        @relation("UserSubjects")
-  schedules       ScheduleEvent[]
-
+  users         User[]
 }
 
 model Subscription {
@@ -96,7 +165,7 @@ model Quiz {
   quizId           String       @id @default(uuid())
   quizName         String       @unique
   quizType         QuizType
-  class            Class
+  class            Class        @relation(fields: [classId], references: [id])
   description      String
   quizInstructions String
   status           Status       @default(DRAFT)
@@ -108,6 +177,7 @@ model Quiz {
   questions        Question[]
   teacher          User         @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   submissions      Submission[]
+  classId          String
 
   @@index([teacherId])
 }
@@ -183,39 +253,17 @@ model CourseMaterial {
   fileUrl      String
   uploadedById String?
   createdAt    DateTime @default(now())
-  uploadedBy   User?    @relation(fields: [uploadedById], references: [id])  // Made optional
-  
-  // Reference to Topic
-  topicId      String?
-  topic        Topic?   @relation(fields: [topicId], references: [id])
+  uploadedBy   User?    @relation(fields: [uploadedById], references: [id]) // Made optional
 
-  subjectId    String
-  subject      Subject  @relation(fields: [subjectId], references: [id])
+  // Reference to Topic
+  topicId String?
+  topic   Topic?  @relation(fields: [topicId], references: [id])
+
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id])
 
   @@index([subjectId])
   @@index([topicId])
-}
-
-enum Role {
-  STUDENT
-  TEACHER
-  ADMIN
-  PARENT
-}
-
-enum Class {
-  P1
-  P2
-  P3
-  P4
-  P5
-  P6
-  S1
-  S2
-  S3
-  S4
-  S5
-  S6
 }
 
 enum Status {
@@ -239,11 +287,6 @@ enum QuizType {
   CLOSED
 }
 
-enum Gender {
-  MALE
-  FEMALE
-}
-
 enum MCQ {
   A
   B
@@ -254,44 +297,79 @@ enum MCQ {
 }
 
 enum ScheduleAudience {
-  PUBLIC        // visible to anyone (school‑wide)
-  STUDENTS      // visible to all students
-  TEACHERS      // visible to all teachers
-  CLASS_ONLY    // visible only to the specified class (targetClass)
-  PRIVATE       // visible only to the creator
+  PUBLIC // visible to anyone (school‑wide)
+  STUDENTS // visible to all students
+  TEACHERS // visible to all teachers
+  CLASS_ONLY // visible only to the specified class (targetClass)
+  PRIVATE // visible only to the creator
 }
 
 model ScheduleEvent {
-  id           String            @id @default(uuid())
-  title        String            // e.g., "Mathematics"
-  description  String?
-  location     String?           // e.g., "A101"
-  audience     ScheduleAudience  @default(PUBLIC)
+  id          String           @id @default(uuid())
+  title       String // e.g., "Mathematics"
+  description String?
+  location    String? // e.g., "A101"
+  audience    ScheduleAudience @default(PUBLIC)
 
   // time window
-  startsAt     DateTime
-  endsAt       DateTime
+  startsAt DateTime
+  endsAt   DateTime
 
   // who created it
-  createdById  String
-  createdBy    User              @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
 
   // optional links to help your UI
-  subjectId    String?
-  subject      Subject?          @relation(fields: [subjectId], references: [id], onDelete: SetNull)
-
-  // optional: limit visibility to a specific class (uses your existing Class enum)
-  targetClass  Class?
+  subjectId String?
+  subject   Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
 
   // optional display helpers (match the screenshot text)
-  teacherName  String?
-  subjectName  String?
+  teacherName String?
+  subjectName String?
 
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([startsAt])
   @@index([createdById])
   @@index([subjectId])
-  @@index([targetClass])
+}
+
+model Level {
+  id     String  @id @default(uuid())
+  name   String
+  grades Grade[]
+}
+
+model Grade {
+  id        String     @id @default(uuid())
+  name      String
+  level     Level      @relation(fields: [levelId], references: [id])
+  levelId   String
+  subgrades Subgrade[]
+  subjects  Subject[]
+  classes   Class[]
+}
+
+model Subgrade {
+  id      String  @id @default(uuid())
+  name    String
+  grade   Grade   @relation(fields: [gradeId], references: [id])
+  gradeId String
+  classes Class[]
+}
+
+model Class {
+  id            String    @id @default(uuid())
+  grade         Grade     @relation(fields: [gradeId], references: [id])
+  gradeId       String
+  subgrade      Subgrade? @relation(fields: [subgradeId], references: [id])
+  subgradeId    String?
+  name          String
+  Teacher       Teacher?  @relation(fields: [teacherUserId], references: [userId])
+  teacherUserId String?
+
+  // Relations
+  students Student[] // Add this relation
+  quizzes  Quiz[]
 }

@@ -7,8 +7,9 @@ import { AuthModule } from './auth/auth.module';
 import { SchoolsModule } from './school/schools.module';
 import { RedisModule } from './common/redis/redis.module';
 import { EmailModule } from './common/email/email.module';
+import { AcademicsModule } from './academics/academics.module';
 import { SubjectsModule } from './subjects/subjects.module';
-import { SchedulesModule } from './schedules/schedules.module';
+// import { SchedulesModule } from './schedules/schedules.module';
 
 @Module({
   imports: [
@@ -20,8 +21,9 @@ import { SchedulesModule } from './schedules/schedules.module';
     SchoolsModule,
     RedisModule,
     EmailModule,
+    AcademicsModule,
     SubjectsModule,
-    SchedulesModule
+    // SchedulesModule
   ],
 })
 export class AppModule implements NestModule {
@@ -34,6 +36,7 @@ export class AppModule implements NestModule {
         { path: 'auth/forgot-password', method: RequestMethod.POST },
         { path: 'auth/reset-password', method: RequestMethod.POST },
         { path: 'schools', method: RequestMethod.POST },
+        { path: 'schools', method: RequestMethod.GET },
         { path: 'auth/logout', method: RequestMethod.POST}
       )
       .forRoutes('*');

@@ -19,9 +19,10 @@ export class AuthService {
   ) {}
 
   async validateUser(identifier: string, password: string, isEmail: boolean) {
+
     const user = isEmail
-      ? await this.usersService.findByEmail(identifier)
-      : await this.usersService.findByPhone(identifier);
+      ? await this.usersService.findByEmail(identifier ?? "")
+      : await this.usersService.findByPhone(identifier ?? "");
 
     if (user && await bcrypt.compare(password, user.password)) {
       const { password, ...result } = user;
@@ -35,7 +36,9 @@ export class AuthService {
     const { email, phone, password } = loginDto;
     const identifier = email || phone;
     const isEmail = !!email;
-
+    if (!identifier) {
+    throw new BadRequestException('Email or phone is required');
+  }
     const user = await this.validateUser(identifier, password, isEmail);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
@@ -69,8 +72,8 @@ export class AuthService {
   }
 
   const user = email
-    ? await this.usersService.findByEmail(email)
-    : await this.usersService.findByPhone(phone);
+    ? await this.usersService.findByEmail(email || '')
+  : await this.usersService.findByPhone(phone || '');
 
   if (!user) {
     throw new NotFoundException('User not found');

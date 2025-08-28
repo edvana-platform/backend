@@ -2,11 +2,6 @@ import { IsString, IsOptional, IsNumber, IsEnum } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 
-/** Domain enum for READ models */
-export enum ClassEnum {
-  P1 = 'P1', P2 = 'P2', P3 = 'P3', P4 = 'P4', P5 = 'P5', P6 = 'P6',
-  S1 = 'S1', S2 = 'S2', S3 = 'S3', S4 = 'S4', S5 = 'S5', S6 = 'S6',
-}
 
 /** Card (list) view DTO */
 export class SubjectCardDto {
@@ -15,10 +10,13 @@ export class SubjectCardDto {
 
   @ApiProperty({ description: 'Subject name' })
   name: string;
+  
+  @ApiProperty({ description: 'Subject name' })
+  @IsOptional()
+  code: string | null;
 
-  @ApiProperty({ enum: ClassEnum, description: 'Class level' })
-  @IsEnum(ClassEnum)
-  class: ClassEnum;
+  @ApiProperty({ description: 'Class level' })
+  gradeId: string;
 
   @ApiProperty({ description: 'Subject description', nullable: true })
   description: string | null;
@@ -59,15 +57,19 @@ export class SubjectDetailDto extends SubjectCardDto {
   }[];
 }
 
-/** Create DTO (typed as string for Prisma compatibility; validated against ClassEnum) */
+/** Create DTO  */
 export class CreateSubjectDto {
   @ApiProperty({ description: 'Subject name', example: 'Mathematics' })
   @IsString()
   name: string;
 
-  @ApiProperty({ enum: ClassEnum, description: 'Class level', example: ClassEnum.S6 })
-  @IsEnum(ClassEnum, { message: 'class must be one of P1–P6 or S1–S6' })
-  class: string; // Prisma column is string
+  @ApiProperty({ description: 'Subject code', example: 'SS0123' })
+  @IsString()
+  code: string;
+
+  @ApiProperty({ description: 'Class level', example: "S1" })
+  @IsString()
+  gradeId: string; // Prisma column is string
 
   @ApiPropertyOptional({ description: 'Subject description', example: 'Advanced mathematics course' })
   @IsOptional() @IsString()
@@ -89,8 +91,12 @@ export class UpdateSubjectDto {
   @IsOptional() @IsString()
   name?: string;
 
-  @ApiPropertyOptional({ enum: ClassEnum, description: 'Class level', example: ClassEnum.S5 })
-  @IsOptional() @IsEnum(ClassEnum, { message: 'class must be one of P1–P6 or S1–S6' })
+  @ApiProperty({ description: 'Subject code', example: 'SS01234' })
+  @IsString()
+  code: string;
+
+  @ApiPropertyOptional({description: 'Class level', example: "S1" })
+  @IsOptional()
   class?: string;
 
   @ApiPropertyOptional({ description: 'Subject description', example: 'Advanced mathematics course' })
