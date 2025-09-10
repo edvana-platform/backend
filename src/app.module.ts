@@ -9,6 +9,7 @@ import { RedisModule } from './common/redis/redis.module';
 import { EmailModule } from './common/email/email.module';
 import { AcademicsModule } from './academics/academics.module';
 import { SubjectsModule } from './subjects/subjects.module';
+import { ResourcesModule } from './resources/resources.module';
 // import { SchedulesModule } from './schedules/schedules.module';
 
 @Module({
@@ -23,6 +24,7 @@ import { SubjectsModule } from './subjects/subjects.module';
     EmailModule,
     AcademicsModule,
     SubjectsModule,
+    ResourcesModule
     // SchedulesModule
   ],
 })

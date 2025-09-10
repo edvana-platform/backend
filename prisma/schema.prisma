@@ -122,6 +122,7 @@ model Subject {
   courseMaterials CourseMaterial[]
   schedules       ScheduleEvent[]
   Grade           Grade            @relation(fields: [gradeId], references: [id])
+  resources       Resource[]
 }
 
 model Topic {
@@ -239,11 +240,12 @@ model Submission {
 }
 
 model File {
-  name      String   @id
+  name      String     @id
   size      BigInt
   type      String
   extension String
   Answer    Answer[]
+  Resource  Resource[]
 }
 
 model CourseMaterial {
@@ -349,6 +351,7 @@ model Grade {
   subgrades Subgrade[]
   subjects  Subject[]
   classes   Class[]
+  resources Resource[] @relation("ResourceGrades")
 }
 
 model Subgrade {
@@ -372,4 +375,23 @@ model Class {
   // Relations
   students Student[] // Add this relation
   quizzes  Quiz[]
+}
+
+model Resource {
+  id           String   @id @default(uuid())
+  name         String
+  description  String?
+  fileUrl      String?
+  file         File?    @relation(fields: [fileName], references: [name])
+  resourceType String
+  subjectId    String
+  gradeIds     String[] // Changed from gradeId to gradeIds array
+  tags         String[]
+  status       String   @default("Active")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  subject  Subject @relation(fields: [subjectId], references: [id])
+  grades   Grade[] @relation("ResourceGrades") // Many-to-many relation with grades
+  fileName String?
 }
