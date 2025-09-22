@@ -37,7 +37,8 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  // ✅ CHANGE THIS LINE - Bind to 0.0.0.0
-  await app.listen(process.env.PORT || 10000, '0.0.0.0');
+  console.log('BOOT: About to start server, PORT=', process.env.PORT || 10000);
+await app.listen(process.env.PORT || 10000, '0.0.0.0');
+console.log('BOOT: Server listening on', process.env.PORT || 10000);
 }
 bootstrap();
