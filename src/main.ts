@@ -38,6 +38,6 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   // ✅ CHANGE THIS LINE - Bind to 0.0.0.0
-  await app.listen(process.env.PORT || 10000, '0.0.0.0');
+  await app.listen(process.env.PORT || 12142, '0.0.0.0');
 }
 bootstrap();
